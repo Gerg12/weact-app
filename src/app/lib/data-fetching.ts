@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
 import client from './apollo-client';
+import type { ProductListItem, ProductListResponse } from '../types';
 
 // Define the GraphQL query - Basic Product Query from Day 4
 const PRODUCT_LIST_QUERY = gql`
@@ -20,28 +21,14 @@ const PRODUCT_LIST_QUERY = gql`
   }
 `;
 
-// Define TypeScript types for the data
-export interface Product {
-  slug: string;
-  name: string;
-  sku: string;
-  regularPrice?: string;
-}
-
-interface ProductListData {
-  products: {
-    nodes: Product[];
-  };
-}
-
 /**
  * Fetches all products from the WooCommerce store
  * This function runs on the server and can be used in Server Components
  * @returns Promise containing array of products or throws an error
  */
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(): Promise<ProductListItem[]> {
   try {
-    const { data, error } = await client.query<ProductListData>({
+    const { data, error } = await client.query<ProductListResponse>({
       query: PRODUCT_LIST_QUERY,
       // Disable cache for server-side requests to ensure fresh data
       fetchPolicy: 'no-cache',

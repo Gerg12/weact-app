@@ -1,6 +1,15 @@
 import { getProducts } from '../lib/data-fetching';
+import ProductList from '../components/ProductList';
 
-// Server Component - runs entirely on the server
+/**
+ * Product List Page (Server Component)
+ * 
+ * This page fetches products from the WooCommerce GraphQL API on the server
+ * and renders them using the compound component pattern:
+ * - ProductList (parent container)
+ * - ProductList.Card (individual product items)
+ */
+
 export default async function ProductListPage() {
   let products;
   let error;
@@ -36,21 +45,19 @@ export default async function ProductListPage() {
 
   return (
     <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-6">Product List</h1>
+      <header>
+        <h1 className="text-3xl font-bold mb-6">Product List</h1>
+        <p className="text-gray-600 mb-8">
+          Showing {products.length} {products.length === 1 ? 'product' : 'products'}
+        </p>
+      </header>
       
-      <ul className="space-y-4">
-        {/* Map over the returned product data and display names and prices */}
+      {/* Compound component pattern: ProductList with ProductList.Card */}
+      <ProductList>
         {products.map((product) => (
-          <li key={product.slug} className="border-b pb-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-medium">{product.name}</span>
-              <span className="text-lg">
-                Price: {product.regularPrice ? `$${parseFloat(product.regularPrice).toFixed(2)}` : 'null'}
-              </span>
-            </div>
-          </li>
+          <ProductList.Card key={product.slug} product={product} />
         ))}
-      </ul>
+      </ProductList>
     </main>
   );
 }
