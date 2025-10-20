@@ -21,8 +21,11 @@ const projectsData = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-8">Welcome</h1>
+    <main className="container mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-8">Welcome to Headless Store</h1>
+      <p className="text-gray-600 mb-8 text-lg">
+        Experience our modern e-commerce platform built with Next.js and WooCommerce.
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* 2. Map over the array to render the components */}
         {projectsData.map((project) => (

@@ -16,11 +16,11 @@ const GET_SITE_INFO = gql`
 export default function TestGraphQL() {
   const { loading, error, data } = useQuery(GET_SITE_INFO);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="container mx-auto p-8">Loading...</div>;
   
   if (error) {
     return (
-      <div className="p-8">
+      <div className="container mx-auto p-8">
         <h1 className="text-2xl font-bold text-red-600 mb-4">GraphQL Error</h1>
         <div className="bg-red-50 border border-red-200 rounded p-4">
           <p className="text-red-800">{error.message}</p>
@@ -34,7 +34,7 @@ export default function TestGraphQL() {
   }
 
   return (
-    <div className="p-8">
+    <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">GraphQL Connection Test</h1>
       
       <div className="bg-green-50 border border-green-200 rounded p-6">

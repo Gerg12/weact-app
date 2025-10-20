@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import ProductImage from './ProductImage';
 
 interface ProjectCardProps {
   title?: string;
@@ -14,13 +14,13 @@ export default function ProjectCard({
   return (
     <div className="border rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
       {imageUrl && (
-        <div className="relative mb-4 w-full h-48">
-          <Image 
+        <div className="relative mb-4 w-full h-48 rounded-md overflow-hidden">
+          <ProductImage 
             src={imageUrl} 
             alt={title} 
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover rounded-md"
+            className="object-cover"
           />
         </div>
       )}

@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import Image from 'next/image';
+import ProductImage from '../../components/ProductImage';
 import client from '../../lib/apollo-client';
 import { getSingleProduct } from '../../lib/data-fetching';
 import type { Product, SingleProductResponse } from '../../types';
@@ -108,14 +108,11 @@ export default async function ProductPage({
   // Handle error state
   if (error) {
     return (
-      <main className="min-h-screen p-8">
+      <main className="container mx-auto p-8">
         <h1 className="text-3xl font-bold mb-8 text-red-600">Error Loading Product</h1>
         <p className="text-gray-700">
           {error.message}
         </p>
-        <a href="/products" className="text-blue-600 hover:underline mt-4 inline-block">
-          ← Back to Products
-        </a>
       </main>
     );
   }
@@ -123,14 +120,11 @@ export default async function ProductPage({
   // Handle product not found
   if (!product) {
     return (
-      <main className="min-h-screen p-8">
+      <main className="container mx-auto p-8">
         <h1 className="text-3xl font-bold mb-8">Product Not Found</h1>
         <p className="text-gray-700">
           The product you're looking for doesn't exist.
         </p>
-        <a href="/products" className="text-blue-600 hover:underline mt-4 inline-block">
-          ← Back to Products
-        </a>
       </main>
     );
   }
@@ -149,13 +143,7 @@ export default async function ProductPage({
   };
 
   return (
-    <main className="min-h-screen p-8">
-      <nav className="mb-8">
-        <a href="/products" className="text-blue-600 hover:underline">
-          ← Back to Products
-        </a>
-      </nav>
-
+    <main className="container mx-auto p-8">
       <article>
         <header className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
@@ -166,21 +154,15 @@ export default async function ProductPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Image */}
-          <div className="relative w-full h-96 lg:h-[600px]">
-            {product.image ? (
-              <Image
-                src={product.image.sourceUrl}
-                alt={product.image.altText || product.name}
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover rounded-lg shadow-lg"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                <span className="text-gray-500">No image available</span>
-              </div>
-            )}
+          <div className="relative w-full h-96 lg:h-[600px] rounded-lg overflow-hidden shadow-lg">
+            <ProductImage
+              src={product.image?.sourceUrl}
+              alt={product.image?.altText || product.name}
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+              priority
+            />
           </div>
 
           {/* Product Details */}

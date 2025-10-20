@@ -24,7 +24,7 @@ export default async function ProductListPage() {
   // Handle error state
   if (error) {
     return (
-      <main className="min-h-screen p-8">
+      <main className="container mx-auto p-8">
         <h1 className="text-3xl font-bold mb-8 text-red-600">Error Loading Products</h1>
         <p className="text-gray-700">
           {error instanceof Error ? error.message : 'An unknown error occurred'}
@@ -36,7 +36,7 @@ export default async function ProductListPage() {
   // Handle no products state
   if (!products || products.length === 0) {
     return (
-      <main className="min-h-screen p-8">
+      <main className="container mx-auto p-8">
         <h1 className="text-3xl font-bold mb-8">Products</h1>
         <p className="text-gray-700">No products found.</p>
       </main>
@@ -44,7 +44,7 @@ export default async function ProductListPage() {
   }
 
   return (
-    <main className="min-h-screen p-8">
+    <main className="container mx-auto p-8">
       <header>
         <h1 className="text-3xl font-bold mb-6">Product List</h1>
         <p className="text-gray-600 mb-8">

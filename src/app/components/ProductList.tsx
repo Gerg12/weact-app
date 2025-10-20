@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import Image from 'next/image';
+import ProductImage from './ProductImage';
 import type { ProductListItem } from '../types';
 
 /**
@@ -62,20 +62,14 @@ function ProductListCard({ product }: ProductListCardProps) {
     <li data-product-slug={product.slug} className="border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
       <article data-product-type={product.__typename}>
         {/* Product Image */}
-        <div className="relative w-full h-64 bg-gray-200">
-          {product.image?.sourceUrl ? (
-            <Image
-              src={product.image.sourceUrl}
-              alt={product.image.altText || product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-gray-500">No image available</span>
-            </div>
-          )}
+        <div className="relative w-full h-64">
+          <ProductImage
+            src={product.image?.sourceUrl}
+            alt={product.image?.altText || product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+          />
         </div>
 
         <div className="p-4">
