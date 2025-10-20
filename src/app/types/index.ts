@@ -16,3 +16,11 @@ export type {
   SingleProductResponse,
 } from './product';
 
+export type {
+  CheckoutItem,
+  CustomerInfo,
+  CheckoutRequest,
+  CheckoutResponse,
+  PaymentMethod,
+} from './checkout';
+

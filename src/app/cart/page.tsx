@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import useCart from '@/app/hooks/useCart';
 import CartItem from '@/app/components/CartItem';
+import type { CheckoutRequest, CheckoutResponse } from '@/app/types';
 
 /**
  * Cart Page Component
@@ -12,15 +14,146 @@ import CartItem from '@/app/components/CartItem';
  * - Cart summary with subtotal, shipping, tax, and grand total
  * - Empty cart state
  * - Continue shopping and checkout actions
+ * - Integrated checkout with payment API
  */
 export default function CartPage() {
   const { items, cartTotal, isEmpty, updateItemQuantity, removeItemFromCart, clearAllItems } = useCart();
+
+  // Checkout state management
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
   // Calculate summary values
   const subtotal = cartTotal;
   const shipping = subtotal > 0 ? 10.00 : 0; // $10 flat rate shipping (placeholder)
   const tax = subtotal * 0.08; // 8% tax (placeholder)
   const grandTotal = subtotal + shipping + tax;
+
+  /**
+   * Handle Checkout Process
+   * 
+   * This function prepares cart data and sends it to the /api/checkout endpoint
+   * along with a payment token (which would come from Stripe.js in production)
+   */
+  const handleCheckout = async () => {
+    // Reset error state
+    setCheckoutError(null);
+    
+    // Validate customer info
+    if (!customerEmail || !customerName) {
+      setCheckoutError('Please enter your email and name');
+      setShowCustomerForm(true);
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail)) {
+      setCheckoutError('Please enter a valid email address');
+      return;
+    }
+
+    setIsProcessing(true);
+    setCheckoutError(null);
+
+    try {
+      /**
+       * PAYMENT TOKEN GENERATION (PLACEHOLDER)
+       * 
+       * In a production environment with Stripe.js, you would:
+       * 
+       * 1. Load Stripe.js on the client:
+       *    const stripe = await loadStripe('pk_test_...');
+       * 
+       * 2. Create card element for user to enter card details:
+       *    const cardElement = elements.create('card');
+       *    cardElement.mount('#card-element');
+       * 
+       * 3. Create payment token when user submits:
+       *    const { token, error } = await stripe.createToken(cardElement);
+       * 
+       * 4. Use token.id as paymentToken below
+       * 
+       * For now, we use a mock token for testing the API integration
+       */
+      const mockPaymentToken = `tok_mock_${Date.now()}`;
+      
+      // Prepare checkout request data
+      const checkoutData: CheckoutRequest = {
+        items: items.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal,
+        tax,
+        shipping,
+        total: grandTotal,
+        customer: {
+          email: customerEmail,
+          name: customerName,
+        },
+        paymentToken: mockPaymentToken, // In production: use real token from Stripe.js
+      };
+
+      console.log('Sending checkout request:', {
+        itemCount: checkoutData.items.length,
+        total: checkoutData.total,
+        customer: checkoutData.customer.email,
+      });
+
+      // Send checkout request to API route
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(checkoutData),
+      });
+
+      const result: CheckoutResponse = await response.json();
+
+      if (result.success) {
+        console.log('✅ Checkout successful!', result);
+        setCheckoutSuccess(true);
+        
+        // Clear the cart after successful checkout
+        setTimeout(() => {
+          clearAllItems();
+          setCustomerEmail('');
+          setCustomerName('');
+          setShowCustomerForm(false);
+        }, 2000);
+        
+        // In production, redirect to order confirmation page:
+        // router.push(`/order-confirmation/${result.orderId}`);
+        
+      } else {
+        // Payment failed
+        setCheckoutError(result.message || 'Payment failed. Please try again.');
+        console.error('❌ Checkout failed:', result.error);
+      }
+
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setCheckoutError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  /**
+   * Show customer info form
+   */
+  const initiateCheckout = () => {
+    setShowCustomerForm(true);
+    setCheckoutError(null);
+  };
 
   if (isEmpty) {
     return (
@@ -149,17 +282,107 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* Customer Info Form */}
+            {showCustomerForm && !checkoutSuccess && (
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-3">Customer Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="John Doe"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isProcessing}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isProcessing}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    💳 Demo Mode: No real payment will be charged. Click checkout to test the API integration.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {checkoutSuccess && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-800">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="font-semibold">Payment Successful!</span>
+                </div>
+                <p className="text-sm text-green-700 mt-2">
+                  Your order has been processed. Check the console for details.
+                </p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {checkoutError && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2 text-red-800">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">Error</span>
+                </div>
+                <p className="text-sm text-red-700 mt-2">{checkoutError}</p>
+              </div>
+            )}
+
             {/* Checkout Button */}
-            <button
-              className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl mb-3"
-              onClick={() => alert('Checkout functionality coming soon!')}
-            >
-              Proceed to Checkout
-            </button>
+            {!showCustomerForm && !checkoutSuccess ? (
+              <button
+                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl mb-3"
+                onClick={initiateCheckout}
+                disabled={isProcessing}
+              >
+                Proceed to Checkout
+              </button>
+            ) : !checkoutSuccess ? (
+              <button
+                className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl mb-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                onClick={handleCheckout}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  'Complete Checkout (Demo)'
+                )}
+              </button>
+            ) : null}
 
             {/* Additional Info */}
             <div className="text-center text-xs text-gray-500">
-              <p>Secure checkout powered by Stripe</p>
+              <p>Secure checkout powered by Stripe (Demo)</p>
+              <p className="mt-1 text-gray-400">No real payment processing in demo mode</p>
             </div>
 
             {/* Promo Code Section (Optional) */}
