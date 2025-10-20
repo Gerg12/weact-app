@@ -1,8 +1,8 @@
 'use client';
 
 import { useSetAtom } from 'jotai';
-import { addToCartAtom, addToastAtom } from '@/store/atoms';
-import type { ProductListItem } from '@/types';
+import { addToCartAtom, addToastAtom } from '@/app/store/atoms';
+import type { ProductListItem } from '@/app/types';
 
 /**
  * AddToCartButton Component

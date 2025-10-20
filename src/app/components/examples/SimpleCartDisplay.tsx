@@ -1,7 +1,7 @@
 'use client';
 
 import { useAtomValue } from 'jotai';
-import { cartItemsAtom, cartCountAtom } from '@/store/atoms';
+import { cartItemsAtom, cartCountAtom } from '@/app/store/atoms';
 
 /**
  * SimpleCartDisplay Component

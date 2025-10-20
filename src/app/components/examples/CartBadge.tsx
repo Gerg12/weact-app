@@ -1,7 +1,7 @@
 'use client';
 
 import { useAtomValue } from 'jotai';
-import { cartCountAtom } from '@/store/atoms';
+import { cartCountAtom } from '@/app/store/atoms';
 
 /**
  * CartBadge Component

@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
 import ProductImage from '../../components/ProductImage';
+import AddToCartSection from './AddToCartSection';
 import client from '../../lib/apollo-client';
 import { getSingleProduct } from '../../lib/data-fetching';
 import type { Product, SingleProductResponse } from '../../types';
@@ -166,10 +167,13 @@ export default async function ProductPage({
           </div>
 
           {/* Product Details */}
-          <div>
+          <div className="space-y-6">
+            {/* Add to Cart Section */}
+            <AddToCartSection product={product} />
+
             {/* Product Description */}
             {product.description && (
-              <div className="mb-6">
+              <div>
                 <h2 className="text-2xl font-semibold mb-4">Description</h2>
                 <div 
                   className="prose max-w-none"
@@ -180,7 +184,7 @@ export default async function ProductPage({
 
             {/* Simple Product Details */}
             {product.__typename === 'SimpleProduct' && (
-              <div className="mb-6">
+              <div>
                 <h2 className="text-2xl font-semibold mb-4">Pricing</h2>
                 <div className="text-3xl font-bold text-green-600">
                   {formatPrice(product.regularPrice)}
