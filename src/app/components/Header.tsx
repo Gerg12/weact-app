@@ -65,7 +65,7 @@ export default function Header() {
               {/* Cart Summary */}
               <li>
                 <Link 
-                  href="#" 
+                  href="/cart" 
                   className="relative group"
                   aria-label={`Shopping cart with ${cartCount} items totaling $${cartTotal.toFixed(2)}`}
                 >
