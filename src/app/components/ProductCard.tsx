@@ -15,9 +15,19 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   // Format price for display
-  const formattedPrice = product.regularPrice 
-    ? `$${parseFloat(product.regularPrice).toFixed(2)}` 
-    : 'Price not available';
+  const formatPrice = (price: string | null) => {
+    if (!price || price === 'null' || price === '') {
+      return 'Price not set';
+    }
+    try {
+      const numPrice = parseFloat(price);
+      return isNaN(numPrice) ? 'Price not set' : `$${numPrice.toFixed(2)}`;
+    } catch {
+      return 'Price not set';
+    }
+  };
+
+  const formattedPrice = formatPrice(product.regularPrice);
 
   return (
     <article data-product-type={product.__typename}>

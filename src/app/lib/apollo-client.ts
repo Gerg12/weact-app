@@ -6,7 +6,7 @@ const getGraphQLEndpoint = () => {
   
   if (!url) {
     console.warn('No GraphQL endpoint configured. Please set WORDPRESS_API_URL or NEXT_PUBLIC_WORDPRESS_API_URL environment variable.');
-    // Return the working endpoint URL
+    // Return the working endpoint URL as fallback
     return 'http://weact.local/graphql';
   }
   

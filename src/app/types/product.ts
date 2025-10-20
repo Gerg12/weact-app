@@ -40,6 +40,7 @@ export interface ProductListItem {
   slug: string;
   name: string;
   sku: string | null;
+  image: ProductImage | null;
   regularPrice?: string | null;
   __typename?: 'SimpleProduct' | 'VariableProduct';
 }
@@ -64,6 +65,7 @@ export interface SimpleProduct extends BaseProduct {
   __typename: 'SimpleProduct';
   regularPrice: string | null;
   onSale: boolean | null;
+  description: string | null;
 }
 
 /**
@@ -73,6 +75,7 @@ export interface SimpleProduct extends BaseProduct {
 export interface VariableProduct extends BaseProduct {
   __typename: 'VariableProduct';
   regularPrice: string | null;
+  description: string | null;
   variations: {
     nodes: ProductVariation[];
   } | null;

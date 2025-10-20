@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client';
 import client from './apollo-client';
-import type { ProductListItem, ProductListResponse } from '../types';
+import type { ProductListItem, ProductListResponse, Product, SingleProductResponse } from '../types';
 
 // Define the GraphQL query - Basic Product Query from Day 4
 const PRODUCT_LIST_QUERY = gql`
@@ -10,6 +10,10 @@ const PRODUCT_LIST_QUERY = gql`
         slug
         name
         sku
+        image {
+          sourceUrl
+          altText
+        }
         ... on SimpleProduct {
           regularPrice(format: RAW)
         }
@@ -54,6 +58,65 @@ export async function getProducts(): Promise<ProductListItem[]> {
     return data.products.nodes;
   } catch (error) {
     console.error('Error fetching products:', error);
+    throw error;
+  }
+}
+
+// GraphQL query for single product by slug
+const SINGLE_PRODUCT_QUERY = gql`
+  query SingleProductBySlug($slug: ID!) {
+    product(id: $slug, idType: SLUG) {
+      name
+      description
+      image {
+        sourceUrl
+        altText
+      }
+      ... on SimpleProduct {
+        regularPrice(format: RAW)
+        onSale
+      }
+      ... on VariableProduct {
+        variations {
+          nodes {
+            name
+            sku
+            regularPrice(format: RAW)
+            attributes {
+              nodes {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Fetches a single product by slug from the WooCommerce store
+ * This function runs on the server and can be used in Server Components
+ * @param slug - Product slug to fetch
+ * @returns Promise containing product data or throws an error
+ */
+export async function getSingleProduct(slug: string): Promise<Product | null> {
+  try {
+    const { data, error } = await client.query<SingleProductResponse>({
+      query: SINGLE_PRODUCT_QUERY,
+      variables: { slug },
+      fetchPolicy: 'no-cache',
+    });
+
+    if (error) {
+      console.error('GraphQL Error:', error);
+      throw new Error(`Failed to fetch product: ${error.message}`);
+    }
+
+    return data.product;
+  } catch (error) {
+    console.error('Error fetching single product:', error);
     throw error;
   }
 }
