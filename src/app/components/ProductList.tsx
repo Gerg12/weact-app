@@ -1,12 +1,18 @@
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import ProductImage from './ProductImage';
 import type { ProductListItem } from '../types';
 
 /**
  * ProductList Component
  * 
- * A compound component pattern for displaying a list of products.
- * Use ProductList as the parent container and ProductList.Card for individual items.
+ * Accessible compound component pattern for displaying products
+ * 
+ * Accessibility Features:
+ * - Semantic <ul>/<li> structure
+ * - Proper ARIA labels
+ * - Focus-visible styles for keyboard navigation
+ * - Screen reader friendly product information
  * 
  * Example usage:
  * <ProductList>
@@ -30,8 +36,11 @@ interface ProductListCardProps {
  */
 function ProductList({ children }: ProductListProps) {
   return (
-    <section aria-label="Product list">
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <section aria-labelledby="products-heading">
+      <h2 id="products-heading" className="sr-only">
+        Products
+      </h2>
+      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 list-none m-0 p-0">
         {children}
       </ul>
     </section>
@@ -59,13 +68,16 @@ function ProductListCard({ product }: ProductListCardProps) {
   const formattedPrice = formatPrice(product.regularPrice);
 
   return (
-    <li data-product-slug={product.slug} className="border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+    <li 
+      data-product-slug={product.slug} 
+      className="border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+    >
       <article data-product-type={product.__typename}>
         {/* Product Image */}
-        <div className="relative w-full h-64">
+        <div className="relative w-full h-64 bg-gray-100">
           <ProductImage
             src={product.image?.sourceUrl}
-            alt={product.image?.altText || product.name}
+            alt={product.image?.altText || `${product.name} product image`}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover"
@@ -74,36 +86,37 @@ function ProductListCard({ product }: ProductListCardProps) {
 
         <div className="p-4">
           <header className="mb-3">
-            <h3 className="text-xl font-bold">{product.name}</h3>
+            <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
           </header>
           
           <div className="space-y-2">
             {product.sku && (
               <dl className="text-sm text-gray-600">
-                <dt className="inline">SKU: </dt>
+                <dt className="inline font-medium">SKU: </dt>
                 <dd className="inline">{product.sku}</dd>
               </dl>
             )}
             
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600" aria-label={`Price: ${formattedPrice}`}>
               <data value={product.regularPrice || '0'}>{formattedPrice}</data>
             </div>
             
             {product.__typename && (
-              <div className="text-xs text-gray-500">
-                <small>Type: {product.__typename}</small>
+              <div className="text-xs text-gray-500 uppercase tracking-wide">
+                <span className="sr-only">Product type: </span>
+                {product.__typename.replace('Product', '')}
               </div>
             )}
           </div>
           
           <footer className="mt-4">
-            <a 
+            <Link 
               href={`/products/${product.slug}`} 
-              aria-label={`View details for ${product.name}`}
-              className="inline-block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              aria-label={`View details for ${product.name}, priced at ${formattedPrice}`}
+              className="inline-block w-full text-center bg-blue-600 text-white px-4 py-3 rounded-md font-semibold hover:bg-blue-700 focus:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
               View Details
-            </a>
+            </Link>
           </footer>
         </div>
       </article>

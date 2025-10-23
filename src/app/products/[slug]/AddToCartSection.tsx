@@ -7,9 +7,15 @@ import type { Product } from '@/app/types';
 /**
  * AddToCartSection Component
  * 
- * Client component that handles adding products to cart.
- * Uses the useCart hook to interact with global cart state.
- * Provides visual feedback when items are added.
+ * Accessible product add-to-cart interface
+ * 
+ * Accessibility Features:
+ * - Semantic <button> elements with aria-labels
+ * - Proper form controls with labels
+ * - Live region for cart feedback
+ * - Keyboard-navigable quantity controls
+ * - Focus-visible styles
+ * - Screen reader announcements
  */
 
 interface AddToCartSectionProps {
@@ -71,36 +77,59 @@ export default function AddToCartSection({ product }: AddToCartSectionProps) {
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-6 sticky top-24">
-      <h2 className="text-xl font-semibold mb-4">Add to Cart</h2>
+    <aside 
+      className="bg-gray-50 rounded-lg p-6 sticky top-24 border border-gray-200"
+      aria-labelledby="add-to-cart-heading"
+    >
+      <h2 id="add-to-cart-heading" className="text-xl font-semibold mb-4 text-gray-900">
+        Add to Cart
+      </h2>
       
       {/* Quantity Selector */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label 
+          htmlFor="quantity-input" 
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Quantity
         </label>
-        <div className="flex items-center space-x-3">
+        <div 
+          className="flex items-center space-x-3"
+          role="group"
+          aria-labelledby="quantity-label"
+        >
+          <span id="quantity-label" className="sr-only">Quantity selector</span>
           <button
+            type="button"
             onClick={decreaseQuantity}
-            className="w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors flex items-center justify-center text-xl font-bold"
-            aria-label="Decrease quantity"
+            disabled={quantity <= 1}
+            className="w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-100 focus:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={`Decrease quantity, current quantity is ${quantity}`}
           >
             −
           </button>
           <input
+            id="quantity-input"
             type="number"
             min="1"
+            max="99"
             value={quantity}
             onChange={(e) => {
               const val = parseInt(e.target.value);
-              if (val >= 1) setQuantity(val);
+              if (val >= 1 && val <= 99) setQuantity(val);
             }}
-            className="w-20 h-10 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-20 h-10 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+            aria-label="Quantity"
+            aria-valuemin={1}
+            aria-valuemax={99}
+            aria-valuenow={quantity}
           />
           <button
+            type="button"
             onClick={increaseQuantity}
-            className="w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors flex items-center justify-center text-xl font-bold"
-            aria-label="Increase quantity"
+            disabled={quantity >= 99}
+            className="w-10 h-10 rounded-lg border border-gray-300 hover:bg-gray-100 focus:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={`Increase quantity, current quantity is ${quantity}`}
           >
             +
           </button>
@@ -109,15 +138,22 @@ export default function AddToCartSection({ product }: AddToCartSectionProps) {
 
       {/* Add to Cart Button */}
       <button
+        type="button"
         onClick={handleAddToCart}
-        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-md hover:shadow-lg"
+        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-800 transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-label={`Add ${quantity} ${quantity === 1 ? 'item' : 'items'} of ${product.name} to cart for $${(getProductPrice() * quantity).toFixed(2)}`}
       >
         Add {quantity > 1 ? `${quantity} Items` : 'to Cart'}
       </button>
 
-      {/* Success Feedback */}
+      {/* Success Feedback - Live Region for Screen Readers */}
       {showFeedback && (
-        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 animate-fade-in">
+        <div 
+          className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 animate-fade-in"
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg
@@ -125,6 +161,7 @@ export default function AddToCartSection({ product }: AddToCartSectionProps) {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
+                aria-hidden="true"
               >
                 <path
                   fillRule="evenodd"
@@ -147,7 +184,7 @@ export default function AddToCartSection({ product }: AddToCartSectionProps) {
 
       {/* Current cart info */}
       {currentQuantityInCart > 0 && (
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-sm text-gray-600" role="status" aria-live="polite">
           <p>
             Currently in cart: <span className="font-semibold">{currentQuantityInCart}</span>
           </p>
@@ -157,13 +194,16 @@ export default function AddToCartSection({ product }: AddToCartSectionProps) {
       {/* Price Summary */}
       <div className="mt-6 pt-6 border-t border-gray-200">
         <div className="flex justify-between items-center text-lg">
-          <span className="font-medium">Subtotal:</span>
-          <span className="font-bold text-green-600">
+          <span className="font-medium text-gray-700">Subtotal:</span>
+          <span 
+            className="font-bold text-green-600"
+            aria-label={`Subtotal: $${(getProductPrice() * quantity).toFixed(2)}`}
+          >
             ${(getProductPrice() * quantity).toFixed(2)}
           </span>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
 

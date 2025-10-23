@@ -195,52 +195,55 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <main id="main-content" className="container mx-auto px-4 py-8">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Shopping Cart</h1>
         <Link 
           href="/products"
-          className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
+          className="text-blue-600 hover:text-blue-700 focus:text-blue-700 font-medium hover:underline focus:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
         >
           ← Continue Shopping
         </Link>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items Section */}
-        <div className="lg:col-span-2">
+        <section className="lg:col-span-2" aria-labelledby="cart-items-heading">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 id="cart-items-heading" className="text-xl font-semibold text-gray-900">
               Cart Items ({items.length})
             </h2>
             <button
+              type="button"
               onClick={clearAllItems}
-              className="text-sm text-red-600 hover:text-red-800 hover:underline font-medium"
+              className="text-sm text-red-600 hover:text-red-800 focus:text-red-800 hover:underline focus:underline font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded px-2 py-1"
+              aria-label={`Clear all items from cart. Currently ${items.length} items in cart.`}
             >
               Clear Cart
             </button>
           </div>
 
           {/* Cart Items List */}
-          <div className="space-y-4">
+          <ul className="space-y-4 list-none m-0 p-0">
             {items.map((item) => {
               return (
-                <CartItem
-                  key={item.productId}
-                  item={item}
-                  onUpdateQuantity={updateItemQuantity}
-                  onRemove={removeItemFromCart}
-                />
+                <li key={item.productId}>
+                  <CartItem
+                    item={item}
+                    onUpdateQuantity={updateItemQuantity}
+                    onRemove={removeItemFromCart}
+                  />
+                </li>
               );
             })}
-          </div>
-        </div>
+          </ul>
+        </section>
 
         {/* Cart Summary Section */}
-        <div className="lg:col-span-1">
+        <aside className="lg:col-span-1" aria-labelledby="order-summary-heading">
           <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 sticky top-24">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
+            <h2 id="order-summary-heading" className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
             
             {/* Summary Details */}
             <div className="space-y-4 mb-6">
@@ -284,42 +287,56 @@ export default function CartPage() {
 
             {/* Customer Info Form */}
             {showCustomerForm && !checkoutSuccess && (
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-3">Customer Information</h3>
+              <form 
+                className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                onSubmit={(e) => { e.preventDefault(); handleCheckout(); }}
+                aria-labelledby="customer-form-heading"
+              >
+                <h3 id="customer-form-heading" className="font-semibold text-gray-900 mb-3">Customer Information</h3>
                 <div className="space-y-3">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="customer-name" className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
+                      <span className="text-red-500 ml-1" aria-label="required">*</span>
                     </label>
                     <input
-                      id="name"
+                      id="customer-name"
+                      name="name"
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="John Doe"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       disabled={isProcessing}
+                      required
+                      aria-required="true"
+                      autoComplete="name"
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="customer-email" className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
+                      <span className="text-red-500 ml-1" aria-label="required">*</span>
                     </label>
                     <input
-                      id="email"
+                      id="customer-email"
+                      name="email"
                       type="email"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="john@example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       disabled={isProcessing}
+                      required
+                      aria-required="true"
+                      autoComplete="email"
                     />
                   </div>
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="text-xs text-gray-600 mt-2" role="note">
                     💳 Demo Mode: No real payment will be charged. Click checkout to test the API integration.
                   </p>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* Success Message */}
@@ -353,24 +370,30 @@ export default function CartPage() {
             {/* Checkout Button */}
             {!showCustomerForm && !checkoutSuccess ? (
               <button
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl mb-3"
+                type="button"
+                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 focus:bg-blue-700 transition-colors shadow-lg hover:shadow-xl focus:shadow-xl mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 onClick={initiateCheckout}
                 disabled={isProcessing}
+                aria-label="Proceed to checkout and enter customer information"
               >
                 Proceed to Checkout
               </button>
             ) : !checkoutSuccess ? (
               <button
-                className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl mb-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                type="button"
+                className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 focus:bg-green-700 transition-colors shadow-lg hover:shadow-xl focus:shadow-xl mb-3 disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 onClick={handleCheckout}
                 disabled={isProcessing}
+                aria-label={`Complete checkout for order total of $${grandTotal.toFixed(2)}`}
+                aria-disabled={isProcessing}
               >
                 {isProcessing ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
+                    <span className="sr-only">Processing your payment</span>
                     Processing...
                   </span>
                 ) : (
@@ -422,9 +445,9 @@ export default function CartPage() {
               </div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
-    </div>
+    </main>
   );
 }
 

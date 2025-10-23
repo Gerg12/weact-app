@@ -44,10 +44,10 @@ export default async function ProductListPage() {
   }
 
   return (
-    <main className="container mx-auto p-8">
-      <header>
-        <h1 className="text-3xl font-bold mb-6">Product List</h1>
-        <p className="text-gray-600 mb-8">
+    <main id="main-content" className="container mx-auto p-8">
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold mb-4 text-gray-900">Product List</h1>
+        <p className="text-gray-600 text-lg" role="status" aria-live="polite">
           Showing {products.length} {products.length === 1 ? 'product' : 'products'}
         </p>
       </header>

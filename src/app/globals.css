@@ -24,3 +24,195 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================
+   ACCESSIBILITY & KEYBOARD NAVIGATION STYLES
+   ============================================ */
+
+/**
+ * Screen Reader Only Content
+ * Hides content visually but keeps it available to screen readers
+ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/**
+ * Focus Visible Override
+ * Only show focus styles when keyboard is used, not on mouse click
+ */
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/**
+ * Global Focus Visible Styles
+ * Ensures all interactive elements have visible focus indicators
+ */
+*:focus-visible {
+  outline: 2px solid #3b82f6; /* blue-500 */
+  outline-offset: 2px;
+}
+
+/**
+ * Skip Links
+ * Appears only when focused, allows keyboard users to skip to main content
+ */
+a[href="#main-content"] {
+  position: absolute;
+  left: -9999px;
+  z-index: 999;
+  padding: 1em;
+  background-color: #3b82f6;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.375rem;
+}
+
+a[href="#main-content"]:focus {
+  left: 1em;
+  top: 1em;
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/**
+ * Reduced Motion
+ * Respects user's preference for reduced motion
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/**
+ * High Contrast Mode Support
+ * Ensures focus indicators are visible in Windows High Contrast Mode
+ */
+@media (prefers-contrast: high) {
+  *:focus-visible {
+    outline-width: 3px;
+    outline-offset: 3px;
+  }
+}
+
+/**
+ * List Reset for Semantic Lists
+ * Removes default list styling when using semantic ul/ol for layout
+ */
+.list-none {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+/**
+ * Focus Within
+ * Highlights containers when child elements receive focus
+ */
+.focus-within\:ring-2:focus-within {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+/**
+ * Disabled State
+ * Ensures disabled elements are not focusable and visually distinct
+ */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button:disabled:hover,
+input:disabled:hover,
+select:disabled:hover,
+textarea:disabled:hover {
+  /* Prevent hover effects on disabled elements */
+  transform: none;
+  box-shadow: none;
+}
+
+/**
+ * Interactive Element Focus States
+ * Ensure all interactive elements are keyboard accessible
+ */
+a, button, input, select, textarea, [tabindex]:not([tabindex="-1"]) {
+  /* Ensure focusable */
+}
+
+/**
+ * Custom Focus Ring Utilities
+ * For components that need custom focus indicators
+ */
+.focus-ring {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.focus-ring-inset {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+/**
+ * Live Region Announcement Styles
+ * For aria-live regions that announce updates to screen readers
+ */
+[role="alert"],
+[role="status"],
+[aria-live] {
+  position: relative;
+}
+
+/**
+ * Visually Hidden but Accessible
+ * Alternative to sr-only for specific use cases
+ */
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}
+
+.visually-hidden.focusable:active,
+.visually-hidden.focusable:focus {
+  clip: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  position: static;
+  width: auto;
+  white-space: normal;
+}
