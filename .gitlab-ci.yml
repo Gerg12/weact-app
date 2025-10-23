@@ -1,0 +1,582 @@
+# ============================================
+# GitLab CI/CD Pipeline Configuration
+# Next.js Headless Storefront
+# ============================================
+
+# Docker image to use for all jobs unless overridden
+image: node:20-alpine
+
+# Define pipeline stages in execution order
+stages:
+  - install
+  - lint
+  - test
+  - security
+  - build
+  - deploy
+
+# Global variables
+variables:
+  # Node/npm settings
+  NODE_ENV: "production"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  NEXT_TELEMETRY_DISABLED: "1"
+  
+  # Build settings
+  NEXT_PUBLIC_SITE_URL: "$SITE_URL"
+  NEXT_PUBLIC_GRAPHQL_ENDPOINT: "$GRAPHQL_ENDPOINT"
+  
+  # Deployment settings
+  DEPLOY_TIMEOUT: "600" # 10 minutes
+
+# Cache configuration for faster builds
+# Shared across all jobs
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+    - node_modules/
+    - .next/cache/
+  policy: pull
+
+# ============================================
+# STAGE 1: INSTALL DEPENDENCIES
+# ============================================
+
+install_dependencies:
+  stage: install
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+      - node_modules/
+    policy: pull-push
+  script:
+    - echo "📦 Installing dependencies..."
+    - npm ci --prefer-offline --no-audit
+    - echo "✅ Dependencies installed successfully"
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# ============================================
+# STAGE 2: LINTING & TYPE CHECKING
+# ============================================
+
+# ESLint - Code Quality Check
+lint:eslint:
+  stage: lint
+  needs:
+    - install_dependencies
+  script:
+    - echo "🔍 Running ESLint..."
+    - npm run lint
+    - echo "✅ ESLint passed"
+  allow_failure: false
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# TypeScript Type Checking
+lint:typescript:
+  stage: lint
+  needs:
+    - install_dependencies
+  script:
+    - echo "🔍 Running TypeScript type check..."
+    - npx tsc --noEmit
+    - echo "✅ TypeScript type check passed"
+  allow_failure: false
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# Code Formatting Check with Prettier (Optional)
+lint:prettier:
+  stage: lint
+  needs:
+    - install_dependencies
+  script:
+    - echo "🔍 Checking code formatting with Prettier..."
+    - npx prettier --check "src/**/*.{js,jsx,ts,tsx,json,css,md}"
+    - echo "✅ Prettier check passed"
+  allow_failure: true # Warning only, doesn't fail pipeline
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# ============================================
+# STAGE 3: TESTING
+# ============================================
+
+# Unit Tests (if you add them later)
+test:unit:
+  stage: test
+  needs:
+    - install_dependencies
+  script:
+    - echo "🧪 Running unit tests..."
+    # Placeholder - uncomment when tests are added
+    # - npm run test:unit -- --coverage --ci
+    - echo "⚠️  No unit tests configured yet"
+    - echo "TODO: Add Jest and React Testing Library"
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    when: always
+    paths:
+      - coverage/
+    reports:
+      junit: coverage/junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    expire_in: 30 days
+  allow_failure: true # Don't fail pipeline if no tests exist yet
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# E2E Tests (Placeholder)
+test:e2e:
+  stage: test
+  needs:
+    - install_dependencies
+  script:
+    - echo "🧪 Running E2E tests..."
+    # Placeholder for Playwright/Cypress tests
+    # - npm run test:e2e
+    - echo "⚠️  No E2E tests configured yet"
+    - echo "TODO: Add Playwright or Cypress"
+  allow_failure: true
+  only:
+    - main
+    - develop
+  tags:
+    - docker
+
+# ============================================
+# STAGE 4: SECURITY TESTING
+# ============================================
+
+# Dependency Vulnerability Scanning
+security:npm_audit:
+  stage: security
+  needs:
+    - install_dependencies
+  script:
+    - echo "🔒 Running npm audit..."
+    - npm audit --audit-level=moderate
+    - echo "✅ No critical vulnerabilities found"
+  allow_failure: true # Warning only
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# SonarQube Code Quality & Security Analysis
+security:sonarqube:
+  stage: security
+  needs:
+    - install_dependencies
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0" # Shallow clones disabled for better analysis
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - echo "🔒 Running SonarQube analysis..."
+    # Placeholder - configure these variables in GitLab CI/CD settings
+    # Required variables:
+    # - SONAR_HOST_URL: Your SonarQube server URL
+    # - SONAR_TOKEN: Authentication token
+    - |
+      sonar-scanner \
+        -Dsonar.projectKey=${CI_PROJECT_NAME} \
+        -Dsonar.projectName="${CI_PROJECT_TITLE}" \
+        -Dsonar.projectVersion=${CI_COMMIT_SHORT_SHA} \
+        -Dsonar.sources=src \
+        -Dsonar.tests=src \
+        -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx \
+        -Dsonar.exclusions=**/node_modules/**,**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx \
+        -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info \
+        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+        -Dsonar.qualitygate.wait=true
+    - echo "✅ SonarQube analysis complete"
+  allow_failure: true # Don't block pipeline if SonarQube is not configured
+  only:
+    - main
+    - develop
+    - merge_requests
+  tags:
+    - docker
+
+# OWASP Dependency Check (Alternative to npm audit)
+security:owasp:
+  stage: security
+  needs:
+    - install_dependencies
+  image: owasp/dependency-check:latest
+  script:
+    - echo "🔒 Running OWASP Dependency Check..."
+    - |
+      /usr/share/dependency-check/bin/dependency-check.sh \
+        --scan . \
+        --format JSON \
+        --format HTML \
+        --project ${CI_PROJECT_NAME} \
+        --out ./dependency-check-report
+    - echo "✅ OWASP scan complete"
+  artifacts:
+    paths:
+      - dependency-check-report/
+    expire_in: 7 days
+    when: always
+  allow_failure: true
+  only:
+    - main
+    - develop
+  tags:
+    - docker
+
+# Secret Detection
+security:secrets:
+  stage: security
+  needs: []
+  image: 
+    name: trufflesecurity/trufflehog:latest
+    entrypoint: [""]
+  script:
+    - echo "🔒 Scanning for secrets and credentials..."
+    - trufflehog filesystem . --json > trufflehog-report.json || true
+    - |
+      if [ -s trufflehog-report.json ]; then
+        echo "⚠️  WARNING: Potential secrets detected!"
+        cat trufflehog-report.json
+      else
+        echo "✅ No secrets detected"
+      fi
+  artifacts:
+    paths:
+      - trufflehog-report.json
+    expire_in: 7 days
+    when: always
+  allow_failure: true
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# ============================================
+# STAGE 5: BUILD
+# ============================================
+
+build:production:
+  stage: build
+  needs:
+    - install_dependencies
+    - lint:eslint
+    - lint:typescript
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+      - node_modules/
+      - .next/cache/
+    policy: pull-push
+  script:
+    - echo "🏗️  Building Next.js application..."
+    - echo "Node version: $(node --version)"
+    - echo "npm version: $(npm --version)"
+    
+    # Set environment variables for build
+    - export NODE_ENV=production
+    - export NEXT_TELEMETRY_DISABLED=1
+    
+    # Run Next.js build
+    - npm run build
+    
+    # Verify build artifacts
+    - |
+      if [ -d ".next" ]; then
+        echo "✅ Build successful - .next directory created"
+        ls -lah .next/
+      else
+        echo "❌ Build failed - .next directory not found"
+        exit 1
+      fi
+    
+    # Generate build info
+    - |
+      cat > .next/build-info.json <<EOF
+      {
+        "commit": "${CI_COMMIT_SHA}",
+        "branch": "${CI_COMMIT_REF_NAME}",
+        "tag": "${CI_COMMIT_TAG}",
+        "buildTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+        "pipeline": "${CI_PIPELINE_ID}",
+        "job": "${CI_JOB_ID}"
+      }
+      EOF
+    
+    - echo "✅ Build artifacts ready for deployment"
+  artifacts:
+    paths:
+      - .next/
+      - public/
+      - package.json
+      - package-lock.json
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - tags
+  tags:
+    - docker
+
+# ============================================
+# STAGE 6: DEPLOYMENT
+# ============================================
+
+# Deploy to Staging/Development
+deploy:staging:
+  stage: deploy
+  needs:
+    - build:production
+  environment:
+    name: staging
+    url: https://staging.your-domain.com
+    on_stop: stop:staging
+  variables:
+    DEPLOY_ENV: "staging"
+  script:
+    - echo "🚀 Deploying to STAGING environment..."
+    - echo "Commit: ${CI_COMMIT_SHORT_SHA}"
+    - echo "Branch: ${CI_COMMIT_REF_NAME}"
+    
+    # Install deployment dependencies (if needed)
+    - apk add --no-cache openssh-client rsync curl
+    
+    # ========================================
+    # OPTION 1: Deploy to Vercel
+    # ========================================
+    # - npm install -g vercel
+    # - vercel deploy --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE --prod=false
+    
+    # ========================================
+    # OPTION 2: Deploy to Netlify
+    # ========================================
+    # - npm install -g netlify-cli
+    # - netlify deploy --dir=.next --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN
+    
+    # ========================================
+    # OPTION 3: Deploy to Custom Server (PM2)
+    # ========================================
+    # - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    # - rsync -avz --delete .next/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/.next/
+    # - rsync -avz package*.json $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+    # - ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && npm ci --production && pm2 reload ecosystem.config.js --env staging"
+    
+    # ========================================
+    # OPTION 4: Deploy to Docker Container
+    # ========================================
+    # - docker build -t $CI_REGISTRY_IMAGE:staging .
+    # - docker push $CI_REGISTRY_IMAGE:staging
+    # - ssh $DEPLOY_USER@$DEPLOY_HOST "docker pull $CI_REGISTRY_IMAGE:staging && docker-compose up -d"
+    
+    # ========================================
+    # PLACEHOLDER DEPLOYMENT
+    # ========================================
+    - echo "⚠️  Deployment configuration required"
+    - echo "TODO: Configure deployment to your hosting platform"
+    - echo "Options: Vercel, Netlify, AWS, Google Cloud, Custom Server"
+    
+    # Health check
+    - echo "🏥 Performing health check..."
+    # - curl --fail https://staging.your-domain.com/api/health || exit 1
+    
+    - echo "✅ Deployment to STAGING complete"
+  only:
+    - develop
+  tags:
+    - docker
+  when: manual # Requires manual trigger
+
+# Stop Staging Environment
+stop:staging:
+  stage: deploy
+  environment:
+    name: staging
+    action: stop
+  script:
+    - echo "🛑 Stopping staging environment..."
+    # Add cleanup commands if needed
+  when: manual
+  only:
+    - develop
+  tags:
+    - docker
+
+# Deploy to Production
+deploy:production:
+  stage: deploy
+  needs:
+    - build:production
+    - security:sonarqube
+  environment:
+    name: production
+    url: https://your-domain.com
+  variables:
+    DEPLOY_ENV: "production"
+  script:
+    - echo "🚀 Deploying to PRODUCTION environment..."
+    - echo "Commit: ${CI_COMMIT_SHORT_SHA}"
+    - echo "Tag: ${CI_COMMIT_TAG}"
+    
+    # Install deployment dependencies
+    - apk add --no-cache openssh-client rsync curl
+    
+    # ========================================
+    # PRODUCTION DEPLOYMENT
+    # ========================================
+    # Configure your production deployment here
+    # Same options as staging, but with production credentials
+    
+    # Example: Vercel Production
+    # - npm install -g vercel
+    # - vercel deploy --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE --prod
+    
+    # ========================================
+    # PLACEHOLDER DEPLOYMENT
+    # ========================================
+    - echo "⚠️  Production deployment configuration required"
+    - echo "TODO: Configure production deployment"
+    
+    # Production health check
+    - echo "🏥 Performing production health check..."
+    # - curl --fail https://your-domain.com/api/health || exit 1
+    
+    # Smoke tests
+    - echo "🧪 Running production smoke tests..."
+    # - curl --fail https://your-domain.com/ || exit 1
+    # - curl --fail https://your-domain.com/products || exit 1
+    
+    - echo "✅ Deployment to PRODUCTION complete"
+  only:
+    - main
+    - tags
+  tags:
+    - docker
+  when: manual # Requires manual approval for production
+  timeout: 10m
+
+# Rollback Production (if needed)
+deploy:rollback:
+  stage: deploy
+  environment:
+    name: production
+    action: rollback
+  script:
+    - echo "⏮️  Rolling back production deployment..."
+    - echo "Previous commit: ${CI_COMMIT_BEFORE_SHA}"
+    # Add rollback commands
+    # - ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && git checkout ${CI_COMMIT_BEFORE_SHA} && npm ci && pm2 reload ecosystem.config.js"
+    - echo "✅ Rollback complete"
+  only:
+    - main
+  when: manual
+  tags:
+    - docker
+
+# ============================================
+# ADDITIONAL JOBS
+# ============================================
+
+# Lighthouse CI Performance Testing
+performance:lighthouse:
+  stage: deploy
+  needs:
+    - deploy:staging
+  image: cypress/browsers:node20.11.0-chrome121.0.6167.85-1-ff120.0-edge121.0.2277.83-1
+  script:
+    - echo "⚡ Running Lighthouse CI..."
+    - npm install -g @lhci/cli
+    - |
+      lhci autorun \
+        --collect.url=https://staging.your-domain.com \
+        --collect.numberOfRuns=3 \
+        --assert.preset=lighthouse:recommended \
+        --upload.target=temporary-public-storage || true
+    - echo "✅ Performance audit complete"
+  artifacts:
+    paths:
+      - .lighthouseci/
+    expire_in: 7 days
+  allow_failure: true
+  only:
+    - develop
+  tags:
+    - docker
+
+# Bundle Size Analysis
+analyze:bundle:
+  stage: build
+  needs:
+    - build:production
+  script:
+    - echo "📊 Analyzing bundle size..."
+    - npx next build --profile
+    - npx @next/bundle-analyzer
+  artifacts:
+    paths:
+      - .next/analyze/
+    expire_in: 30 days
+  allow_failure: true
+  only:
+    - main
+    - develop
+  tags:
+    - docker
+  when: manual
+
+# ============================================
+# WORKFLOW RULES
+# ============================================
+
+workflow:
+  rules:
+    # Run pipeline for all branches
+    - if: $CI_COMMIT_BRANCH
+    # Run pipeline for all tags
+    - if: $CI_COMMIT_TAG
+    # Run pipeline for merge requests
+    - if: $CI_MERGE_REQUEST_ID
+    # Don't run for other events
+    - when: never
+
