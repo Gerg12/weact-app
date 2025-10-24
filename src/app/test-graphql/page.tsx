@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery, gql } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 
 // Simple query to test GraphQL connection
 const GET_SITE_INFO = gql`
